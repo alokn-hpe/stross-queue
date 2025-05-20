@@ -1,4 +1,5 @@
 from celery import Celery
+import datetime
 from .db import SessionLocal
 from .models import ImageScan, ScanStatus, JobStatus
 from .stross_api import start_scan, check_scan_status, download_report, upload_inventory, get_token
@@ -104,6 +105,7 @@ def report_task(self, scan_id, token):
         # Check if all file uploads completed
         if len(db.query(ImageScan).filter_by(job=scan.job)) == len(db.query(ImageScan).filter_by(job=scan.job, status=ScanStatus.inventory_uploaded)):
             scan.job.status = JobStatus.completed
+            scan.job.completed_at = datetime.datetime.now(datetime.timezone.utc)
             db.commit()
     else:
         print(f"File upload failed: {inv_upload.status_code}, {inv_upload.text}")
