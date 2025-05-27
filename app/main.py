@@ -1,6 +1,6 @@
-from fastapi import FastAPI, UploadFile
+from fastapi import FastAPI, UploadFile, Form
 from app import db, models
-from app.models import Product, ScanStatus, Job
+from app.models import ScanStatus, Job
 from app.tasks import scan_image_task, check_status_task, report_task
 from app.stross_api import get_token
 
@@ -11,13 +11,13 @@ async def huho():
     return {"message": "Up and running!"}
 
 @app.post("/initiate/")
-async def upload_images_list(product: Product, file: UploadFile):
+async def upload_images_list(file: UploadFile, product_name: str = Form(...), product_version: str = Form(...)):
     content = await file.read()
     image_names = [image.split("\t")[0] for image in content.decode().splitlines() if image.split("\t")]
     token = get_token()
 
     session = db.SessionLocal()
-    job = Job(product_name=product.name, product_version=product.version) # type: ignore
+    job = Job(product_name=product_name, product_version=product_version) # type: ignore
     session.add(job)
     for image in image_names:
         scan = models.ImageScan(image_name=image.strip(), status=ScanStatus.pending, job=job) # type: ignore

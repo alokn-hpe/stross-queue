@@ -1,0 +1,51 @@
+services:
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+
+  postgres:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: sqadmin
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: scanner_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  web:
+    build: .
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql+psycopg2://sqadmin:password@postgres:5432/scanner_db
+      - ARTIFACTORY_USERNAME=FILL
+      - ARTIFACTORY_PASSWORD=FILL
+      - VTN_EMAIL=FILL
+      - VTN_TOKEN=FILL
+      - VTN_SESSION_TOKEN=FILL
+    ports:
+      - "8000:8000"
+    command: ["gunicorn", "app.main:app", "-k", "uvicorn.workers.UvicornWorker", "-b", "0.0.0.0:8000", "--workers", "4"]
+
+  worker:
+    build: .
+    depends_on:
+      - redis
+      - postgres
+    environment:
+      - REDIS_URL=redis://redis:6379
+      - DATABASE_URL=postgresql+psycopg2://sqadmin:password@postgres:5432/scanner_db
+      - ARTIFACTORY_USERNAME=FILL
+      - ARTIFACTORY_PASSWORD=FILL
+      - VTN_EMAIL=FILL
+      - VTN_TOKEN=FILL
+      - VTN_SESSION_TOKEN=FILL
+    command: ["celery", "-A", "celery_worker", "worker", "--loglevel=info", "-Q", "scan,report"]
+
+volumes:
+  pgdata:

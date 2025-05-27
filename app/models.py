@@ -6,11 +6,6 @@ import shortuuid
 import enum
 import datetime
 
-###### REQUEST MODELS
-class Product(BaseModel):
-    name: str
-    version: str
-
 ###### DB MODELS
 Base = declarative_base()
 
@@ -52,5 +47,5 @@ class ImageScan(Base):
     report_file = Column(String, nullable=True)
     created_at = Column(DateTime, default=datetime.datetime.now(datetime.timezone.utc))
 
-    job_id = Column(Integer, ForeignKey('jobs.id'))
+    job_id = Column(String(22), ForeignKey('jobs.id'))
     job = relationship("Job", back_populates="image_scans")

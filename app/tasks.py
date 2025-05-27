@@ -28,14 +28,18 @@ def scan_image_task(self, id, token):
             "source": scan.image_name + f"?user={ARTIFACTORY_USERNAME}&token={ARTIFACTORY_PASSWORD}" if scan.image_name.startswith("arti") else ""
         }
         response = start_scan(payload, token)
+        response = response.json()
         if int(response["code"]) == 420:
-            raise self.retry(countdown=90)
+            print(response)
+            self.retry(countdown=90)
         elif response["success"] == True:
             scan.status = ScanStatus.in_progress
             scan.job.status = JobStatus.progress
             scan.scan_id = int(response['data']['scanId'])
             db.commit()
             check_status_task.apply_async((scan.scan_id,token), countdown=30)
+        else:
+            print(response)
 
     except Exception as e:
         scan.status = ScanStatus.init_fail
@@ -103,7 +107,7 @@ def report_task(self, scan_id, token):
         scan.status = ScanStatus.inventory_uploaded
         db.commit()
         # Check if all file uploads completed
-        if len(db.query(ImageScan).filter_by(job=scan.job)) == len(db.query(ImageScan).filter_by(job=scan.job, status=ScanStatus.inventory_uploaded)):
+        if len(list(db.query(ImageScan).filter_by(job=scan.job).all())) == len(list(db.query(ImageScan).filter_by(job=scan.job, status=ScanStatus.inventory_uploaded).all())):
             scan.job.status = JobStatus.completed
             scan.job.completed_at = datetime.datetime.now(datetime.timezone.utc)
             db.commit()

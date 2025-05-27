@@ -15,7 +15,7 @@ def get_headers(token):
     }
 
 def start_scan(payload, token):
-    return requests.post(f"{API_BASE_URL}/scans/initiate", json=payload, headers=get_headers(token)).json()
+    return requests.post(f"{API_BASE_URL}/scans/initiate", json=payload, headers=get_headers(token))
 
 def check_scan_status(scan_id, token):
     return requests.get(f"{API_BASE_URL}/scans/status?scanId={scan_id}", headers=get_headers(token)).json()
