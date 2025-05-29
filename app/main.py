@@ -16,7 +16,7 @@ async def upload_images_list(file: UploadFile, product_name: str = Form(...), pr
     image_names = [image.split("\t")[0] for image in content.decode().splitlines() if image.split("\t")]
     token = get_token()
 
-    session = db.SessionLocal()
+    session = db.get_session()
     job = Job(product_name=product_name, product_version=product_version) # type: ignore
     session.add(job)
     for image in image_names:
@@ -34,7 +34,7 @@ async def upload_images_list(file: UploadFile, product_name: str = Form(...), pr
 
 @app.post("/resume/{job_id}")
 async def resume_job(job_id):
-    session = db.SessionLocal()
+    session = db.get_session()
     job = session.query(models.Job).filter_by(id=job_id).first()
     token = get_token()
 

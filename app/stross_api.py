@@ -1,11 +1,13 @@
 import requests
 from dotenv import load_dotenv
+from logging import getLogger
 import os
 
 API_BASE_URL = "https://secureprod155.houston.hpecorp.net/api"
 VTN_BASE_URL = "https://vtn.hpecorp.net/api"
 
 load_dotenv()
+logger = getLogger(__name__)
 
 def get_headers(token):
     return {
@@ -54,7 +56,7 @@ def get_token():
     # Check if old token still valid and return
     old_token = os.getenv('VTN_SESSION_TOKEN')
     if is_token_valid(old_token):
-        print(f"Old token still valid.")
+        logger.info(f"Old token still valid.")
         return old_token
     
     payload = {
@@ -67,19 +69,11 @@ def get_token():
         response.raise_for_status()
         if response.status_code == 200:
             token = response.json()['data']['token']['token']
-            print(f"Successfully Authenticated")
+            logger.info(f"Successfully Authenticated")
 
             # Save the new token
-            env_file = open('.env', 'r+')
-            env_lines = env_file.readlines()
-            env_file.close()
-            for i in range(0, len(env_lines)):
-                if 'VTN_SESSION_TOKEN' in env_lines[i]:
-                    env_lines[i] = f"VTN_SESSION_TOKEN={token}"
-            env_file = open('.env', 'w+')
-            env_file.writelines(env_lines)
-            env_file.close()
+            os.environ['VTN_SESSION_TOKEN'] = token
             return token
     except requests.RequestException as e:
-        print(f"Failed to get session token | Error : {e}")
+        logger.error(f"Failed to get session token | Error : {e}")
         return None
