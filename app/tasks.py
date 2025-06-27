@@ -118,4 +118,6 @@ def report_task(self, scan_id, token):
             db.commit()
     else:
         logger.error(f"File upload failed: {inv_upload.status_code}, {inv_upload.text}")
+        scan.status_response = {inv_upload.text}
+        db.commit()
         self.retry(countdown=30)
